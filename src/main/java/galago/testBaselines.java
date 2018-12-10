@@ -88,6 +88,7 @@ public class testBaselines {
                 if(line.split(":").length==2){
                     String number = line.split(":")[0];
                     String text = line.split(":")[1];
+                    text = "#stopword("+text+")";
                     p.set("number",number);
                     p.set("text",text);
                     result.add(p);
