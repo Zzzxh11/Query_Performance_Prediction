@@ -19,16 +19,16 @@ public class testBaselines {
     public static void main(String[] args) throws Exception {
         try {
             String[] indexPaths = new String[1];
-//            indexPaths[0] = args[0];
-//            String queryFileName = args[1];
-//            String mapFile = args[2];
-//            String resultFile = args[3];
-//            String predictor = args[4];
-            indexPaths[0] = "C:\\Users\\Parastoo\\Documents\\NetBeansProjects\\explicit-semantic-analysis-master(1)\\explicit-semantic-analysis-master\\indexTest\\indexClueweb2009.idx";
-            String queryFileName = "C:\\Users\\Parastoo\\Desktop\\test\\query.txt";
-            String mapFile = "C:\\Users\\Parastoo\\Documents\\NetBeansProjects\\explicit-semantic-analysis-master(1)\\explicit-semantic-analysis-master\\data\\map-ql_2009-result.txt";
-            String resultFile = "C:\\Users\\Parastoo\\Desktop\\test\\result.txt";
-            String predictor = "WIG";
+            indexPaths[0] = args[0];
+            String queryFileName = args[1];
+            String mapFile = args[2];
+            String resultFile = args[3];
+            String predictor = args[4];
+//            indexPaths[0] = "C:\\Users\\Parastoo\\Documents\\NetBeansProjects\\explicit-semantic-analysis-master(1)\\explicit-semantic-analysis-master\\indexTest\\indexClueweb2009.idx";
+//            String queryFileName = "C:\\Users\\Parastoo\\Desktop\\test\\query.txt";
+//            String mapFile = "C:\\Users\\Parastoo\\Documents\\NetBeansProjects\\explicit-semantic-analysis-master(1)\\explicit-semantic-analysis-master\\data\\map-ql_2009-result.txt";
+//            String resultFile = "C:\\Users\\Parastoo\\Desktop\\test\\result.txt";
+//            String predictor = "WIG";
 
             BufferedWriter bw= new BufferedWriter(new FileWriter(resultFile));
             Retrieval retrieval = RetrievalFactory.instance(Arrays.asList(indexPaths), Parameters.create());
@@ -88,6 +88,7 @@ public class testBaselines {
                 if(line.split(":").length==2){
                     String number = line.split(":")[0];
                     String text = line.split(":")[1];
+                    text = "#combine("+text+")";
                     text = "#stopword("+text+")";
                     p.set("number",number);
                     p.set("text",text);
