@@ -8,6 +8,10 @@ package featurs;
 import com.github.andrewoma.dexx.collection.Pair;
 import core.LanguageModel;
 import core.SqlConnection;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -65,7 +69,8 @@ public class F01 {
         
     }
     
-    public void run(){
+    public void run() throws IOException{
+        BufferedWriter bw = new BufferedWriter(new FileWriter(new File("./data/"+rs+"-"+dataset+"-F01.txt")));
         for (int i = start; i <= end; i++) {
             ResultList = new HashMap<>();
             ResultList = getQueryResultList(Integer.toString(i));
@@ -79,9 +84,12 @@ public class F01 {
         for (int i = start; i <= end; i++) {
             ResultList = new HashMap<>();
             double Score = CalculateNQCScore(Integer.toString(i));
+            bw.write(i+" "+ Score);
+            bw.write("\n");
+            bw.flush();
             System.out.println("query "+i+" :"+ Score);
         }
-        
+        bw.close();
     }
     
     private double CalculateNQCScore (String queryId){

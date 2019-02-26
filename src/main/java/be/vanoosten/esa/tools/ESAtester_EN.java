@@ -11,6 +11,8 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import be.vanoosten.esa.EnwikiFactory;
 import be.vanoosten.esa.WikiAnalyzer;
 import be.vanoosten.esa.WikiFactory;
+import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
+import core.SqlConnection;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import static org.apache.lucene.util.Version.LUCENE_48;
@@ -20,7 +22,13 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,30 +38,45 @@ import java.util.logging.Logger;
  */
 public class ESAtester_EN {
 
+    MysqlDataSource dataSource ;
+    Connection connection;
+    Statement statement;
+//    HashMap<String, Double> maxSimilarity;
+    HashMap<String, Double> countMap;
+    public ESAtester_EN(){
+        countMap = new HashMap<>();
+        dataSource = new MysqlDataSource();
+        dataSource.setUser("root");
+        dataSource.setPassword("137428sAm");
+        dataSource.setServerName("localhost");
+        dataSource.setDatabaseName("query_performance_prediction");
+        dataSource.setUseUnicode(true);
+        dataSource.setCharacterEncoding("UTF-8");
+
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.createStatement();
+        } catch (SQLException ex) {
+            Logger.getLogger(ESAtester_EN.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
     public static void main(String[] args) throws IOException {
-        //String t1 = (String)args[0];
-        //String t2 = (String)args[1];
+
+
         ESAtester_EN esa = new ESAtester_EN();
-//        esa.outputESA("ESAData.txt");
-//        String t1 = "London";
-//        String t2 = "London";
-//        try {
-//            double esa = calcESA(t1, t2);
-//            System.out.println("T1: " + t1 + " T2: " + t2 + " ESA: " + esa);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+
+
 
     }
 
     public ArrayList<String> outputESA(ArrayList<String> entityPair) throws FileNotFoundException, IOException {
-//        String saveAddress = "./output/" + "ESA.txt";
-      //  String saveExceptionAddress = "./output/exception/" + "ESA.txt";
-        String output = "";
-//        writeOutputToFile(output, saveAddress);
-    //    writeOutputToFile(output, saveExceptionAddress);
 
-//        BufferedReader br = new BufferedReader(new FileReader(filename));
+//        maxSimilarity = new HashMap<>();
+        
+        
+        
+        String output = "";
         String count ="";
         ArrayList<String> entityPairResult = new ArrayList<>();
         for(String line : entityPair) {
@@ -62,26 +85,28 @@ public class ESAtester_EN {
             count = line.split(" ")[2];
 
             try {
-                double esa = calcESA(entity1, entity2);
+                double esa = CalcSimilarity(entity1, entity2);
+                countMap.put(entity2, Double.parseDouble(count));
+//                if(!maxSimilarity.containsKey(entity2))
+//                    maxSimilarity.put(entity2, esa);
+//                else if(maxSimilarity.get(entity2)<esa)
+//                    maxSimilarity.put(entity1, esa);
+                
                 output = entity1 + " " + entity2 + " " + esa +" "+count ;
                 entityPairResult.add(output);
-              //  System.out.println("T1: " + t1 + " T2: " + t2 + " ESA: " + esa);
+              
             } catch (Exception e) {
                 System.out.println(e.getMessage());
                 e.printStackTrace();
             }
 
-//            // System.out.println(entity);
-//            if (output.contains("exception")) {
-//                fileWriterContinue(output, saveExceptionAddress);
-//
-//            } else {
-//                fileWriterContinue(output, saveAddress);
-//            }
-//            //   System.out.println(output);
         }
-//        
-//        System.out.println("F01.txt" + " done");
+//        for (String str : maxSimilarity.keySet()) {
+//            if(countMap.get(str)!=null)
+//            {   output = "entity1" + " " + str + " " + maxSimilarity.get(str) +" "+countMap.get(str) ;
+//                entityPairResult.add(output);
+//            }
+//        }
         return entityPairResult;
 
     }
@@ -138,5 +163,47 @@ public class ESAtester_EN {
             }
         }
 
+    }
+
+    private double CalcSimilarity(String entity1, String entity2) {
+        double esa=0;
+        try {
+                String query= "SELECT similarity FROM `similarityScore` WHERE (entity1 = \""+entity1+"\" and entity2 = \""+entity2+
+                        "\" ) or (entity2 = \""+entity1+"\" and entity1 = \""+entity2+"\" )";
+                ResultSet resultset = SqlConnection.select(query);
+                
+                if(resultset.next()){
+                    esa= Double.parseDouble( resultset.getString(1));
+                }
+                else{
+                    esa = calcESA(entity1, entity2);
+                    try{
+                            PreparedStatement updateSales = connection.prepareStatement(
+                                "insert into similarityScore (entity1,entity2,similarity) values(?,?,?)");
+                            updateSales.setString(1, entity1); 
+                            updateSales.setString(2, entity2);
+                            updateSales.setString(3, Double.toString(esa));
+                            int row = updateSales.executeUpdate();
+                            if (row > 0) {
+                                System.out.println("A contact was inserted");
+
+                            } 
+
+                        }
+                        catch(Exception ex){
+                            System.out.println("repeated");
+                            statement.close();
+                            connection.close();
+                            connection = dataSource.getConnection();
+                            statement = connection.createStatement();
+                        }
+                }
+                
+              
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
+        return esa;
     }
 }

@@ -34,16 +34,27 @@ public class main {
     
     public static void main(String[] args) throws FileNotFoundException, IOException  {
         
-        BufferedReader br = new BufferedReader(new FileReader(new File("./data/clueweb2009.txt")));
-        BufferedWriter wr = new BufferedWriter(new FileWriter(new File("./data/jsonformat.json")));
+        BufferedReader br = new BufferedReader(new FileReader(new File("./data/rb4.txt")));
+        BufferedWriter wr = new BufferedWriter(new FileWriter(new File("./data/jsonformatRobust2.json")));
         
         String text = "{ \"requested\" : 1000 ,"
                     + " \"queries\" : [ ";
         String line = "";
         while((line=br.readLine())!=null){
-             text = text+ "{ \"number\" : \"" +line.split(":")[0]+ "\","
-                    + " \"text\" : \"#combine(" +line.split(":")[1] +")\" } , \n";
-            
+            if(line.contains("<num>"))
+            {
+                String number = line.replaceAll("<num> Number: ", "");
+                number = number.replace(" ", "");
+                line = br.readLine();
+                line = br.readLine();
+                if(line.contains("<title>")){
+                    line=br.readLine();
+//                    String title = line.replaceAll("<title> ", "");
+                    String title = line;
+                    text = text+ "{ \"number\" : \"" +number+ "\","
+                    + " \"text\" : \"#stopword(#combine(" +title +"))\" } , \n";
+                }
+            }
             
         }
         text = text+"] }";
